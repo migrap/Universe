@@ -1,20 +1,36 @@
-default binDir = '${Path.Combine(Directory.GetCurrentDirectory(), "bin")}'
-var nodeInstallDir = '${Path.Combine(binDir, "node")}'
+use assembly="System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+use namespace="System.IO"
+use namespace="System.IO.Compression"
 
--// Check if node is already installed locally
-var nodeVer = '0.10.28'
-var nodeMsi = 'node-v${nodeVer}-x86.msi'
-var nodeUrl = 'http://nodejs.org/dist/v${nodeVer}/${nodeMsi}'
-var nodeMsiPath = '${Path.Combine(binDir, nodeMsi)}'
-var nodeInstalled = '${Directory.Exists(nodeInstallDir)}'
+default binDir = '${Path.Combine(Directory.GetCurrentDirectory(), "bin")}'
+
+-// When updating the node version you need to update the nodeExeSha to match what 'signtool.exe /pa /v node.exe' emits
+default nodeVer = '0.10.28'
+default npmVer = '1.4.8'
+default nodeExeSha = '628FFD6C3577068C00CEC9F6F897F0EC8F5212D9'
+default nodeInstallDir = '${Path.Combine(binDir, "nodejs")}'
+
+var nodeExe = 'node.exe'
+var npmZip = 'npm-${npmVer}.zip'
+var nodeDist = 'http://nodejs.org/dist/'
+var nodeUrl = '${nodeDist}v${nodeVer}/${nodeExe}'
+var npmUrl = '${nodeDist}npm/${npmZip}'
+var doInstall = '${!Directory.Exists(nodeInstallDir)}'
+var nodeInstallExePath = '${Path.Combine(nodeInstallDir, nodeExe)}'
+var npmInstallZipPath = '${Path.Combine(nodeInstallDir, npmZip)}'
+
 @{
-  Directory.CreateDirectory(nodeDir);
-  if (!nodeInstalled) {
-    // Download node installer msi
+  if (doInstall) {
+    Directory.CreateDirectory(nodeInstallDir);
+
+    // Download node
     var wc = new WebClient();
-    wc.DownloadFile(nodeUrl, nodeMsiPath);
+    wc.DownloadFile(nodeUrl, nodeInstallExePath);
+    wc.DownloadFile(npmUrl, npmInstallZipPath);
+
+    // Unzip npm
+    ZipFile.ExtractToDirectory(npmInstallZipPath, nodeInstallDir);
   }
 }
 
--// Extract it to local dir using msiexec:
-exec program='msiexec' commandline='/a ${nodeMsiPath} /qn TARGETDIR=${nodeInstallDir}' if='!nodeInstalled' once='installNode'
+verify-authenticode verifyFilePath='${nodeInstallExePath}' expectedHash='${nodeExeSha}' if='doInstall'

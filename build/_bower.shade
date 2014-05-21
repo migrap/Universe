@@ -1,5 +1,5 @@
 default currentDir = '${Directory.GetCurrentDirectory()}'
-default nodeDir = '${Path.Combine(currentDir, "bin", "node", "nodejs")}'
+default nodeDir = '${Path.Combine(currentDir, "bin", "nodejs")}'
 var bowerInstalled = '${Directory.Exists(Path.Combine(nodeDir, "node_modules", "bower"))}'
 
 npm npmCommand='install --prefix ${nodeDir} bower' if='!bowerInstalled' once='installBower'
