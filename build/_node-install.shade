@@ -6,7 +6,7 @@ var nodeVer = '0.10.28'
 var nodeMsi = 'node-v${nodeVer}-x86.msi'
 var nodeUrl = 'http://nodejs.org/dist/v${nodeVer}/${nodeMsi}'
 var nodeMsiPath = '${Path.Combine(binDir, nodeMsi)}'
-var nodeInstalled = '${Directory.Exists(nodeDir)}'
+var nodeInstalled = '${Directory.Exists(nodeInstallDir)}'
 @{
   Directory.CreateDirectory(nodeDir);
   if (!nodeInstalled) {
