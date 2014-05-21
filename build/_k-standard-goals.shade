@@ -74,6 +74,45 @@ default Configuration='Release'
      }
    }
 
+#restore-npm-modules
+  var sep = '${Path.DirectorySeparatorChar}'
+  @{
+    // Find all dirs that contain a package.json file that aren't installed node modules
+    var npmDirs = Directory.GetFiles(Directory.GetCurrentDirectory(), "package.json", SearchOption.AllDirectories)
+                           .Where(p => p.IndexOf(sep + "node_modules" + sep) < 0 &&
+                                       p.IndexOf(sep + "bower_components" + sep) < 0)
+                           .Select(p => Path.GetDirectoryName(p))
+                           .Distinct();
+  }
+  
+  npm npmCommand='install' each='var npmDir in npmDirs'
+
+#restore-bower-components
+  var sep = '${Path.DirectorySeparatorChar}'
+  @{
+    // Find all dirs that contain a bower.json file
+    var bowerDirs = Directory.GetFiles(Directory.GetCurrentDirectory(), "bower.json", SearchOption.AllDirectories)
+                             .Where(p => p.IndexOf(sep + "node_modules" + sep) < 0 &&
+                                         p.IndexOf(sep + "bower_components" + sep) < 0)
+                             .Select(p => Path.GetDirectoryName(p))
+                             .Distinct();
+  }
+  
+  bower each='var bowerDir in bowerDirs' bowerCommand='install'
+
+#run-grunt .restore-npm-modules .restore-bower-components target='compile'
+  var sep = '${Path.DirectorySeparatorChar}'
+  @{
+    // Find all dirs that contain a gruntfile.js file
+    var gruntDirs = Directory.GetFiles(Directory.GetCurrentDirectory(), "gruntfile.js", SearchOption.AllDirectories)
+                             .Where(p => p.IndexOf(sep + "node_modules" + sep) < 0 &&
+                                         p.IndexOf(sep + "bower_components" + sep) < 0)
+                             .Select(p => Path.GetDirectoryName(p))
+                             .Distinct();
+  }
+
+  grunt each='var gruntDir in gruntDirs'
+
 functions @{
     string E(string key) { return Environment.GetEnvironmentVariable(key); }
     void E(string key, string value) { Environment.SetEnvironmentVariable(key, value); }

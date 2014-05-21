@@ -1,0 +1,20 @@
+default binDir = '${Path.Combine(Directory.GetCurrentDirectory(), "bin")}'
+var nodeInstallDir = '${Path.Combine(binDir, "node")}'
+
+-// Check if node is already installed locally
+var nodeVer = '0.10.28'
+var nodeMsi = 'node-v${nodeVer}-x86.msi'
+var nodeUrl = 'http://nodejs.org/dist/v${nodeVer}/${nodeMsi}'
+var nodeMsiPath = '${Path.Combine(binDir, nodeMsi)}'
+var nodeInstalled = '${Directory.Exists(nodeDir)}'
+@{
+  Directory.CreateDirectory(nodeDir);
+  if (!nodeInstalled) {
+    // Download node installer msi
+    var wc = new WebClient();
+    wc.DownloadFile(nodeUrl, nodeMsiPath);
+  }
+}
+
+-// Extract it to local dir using msiexec:
+exec program='msiexec' commandline='/a ${nodeMsiPath} /qn TARGETDIR=${nodeInstallDir}' if='!nodeInstalled' once='installNode'
