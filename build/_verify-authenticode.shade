@@ -14,6 +14,8 @@ default expectedHash = ''
         Arguments = "verify /pa /v " + verifyFilePath,
     };
 
+    Log.Info(string.Format("Verifying Authenticode signature of {0}", verifyFilePath));
+
     var signTool = Process.Start(processStartInfo);
     var stdout = signTool.StandardOutput.ReadToEnd();
     signTool.WaitForExit();
@@ -35,4 +37,6 @@ default expectedHash = ''
             throw new Exception(string.Format("The hash comparison for {0} failed: expected hash '{1}', actual hash '{2}'", verifyFilePath, expectedHash, actualHash));
         }
     }
+
+    Log.Info("Authenticode signature verified!");
 }

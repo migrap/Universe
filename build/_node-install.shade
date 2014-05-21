@@ -21,14 +21,21 @@ var npmInstallZipPath = '${Path.Combine(nodeInstallDir, npmZip)}'
 
 @{
   if (doInstall) {
+    Log.Info("Installing nodejs locally");
+
     Directory.CreateDirectory(nodeInstallDir);
 
     // Download node
     var wc = new WebClient();
+
+    Log.Info(string.Format("Downloading {0} to {1}", nodeUrl, nodeInstallExePath));
     wc.DownloadFile(nodeUrl, nodeInstallExePath);
+
+    Log.Info(string.Format("Downloading {0} to {1}", npmUrl, npmInstallZipPath));
     wc.DownloadFile(npmUrl, npmInstallZipPath);
 
     // Unzip npm
+    Log.Info(string.Format("Unzipping npm to {0}", nodeInstallDir));
     ZipFile.ExtractToDirectory(npmInstallZipPath, nodeInstallDir);
   }
 }
