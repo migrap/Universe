@@ -22,6 +22,7 @@ default expectedHash = ''
 
     if (signTool.ExitCode != 0)
     {
+        File.Delete(verifyFilePath);
         throw new Exception(string.Format("The signature verification for {0} failed:{1}{2}", verifyFilePath, Environment.NewLine, stdout));
     }
 
@@ -34,6 +35,7 @@ default expectedHash = ''
 
         if (!string.Equals(expectedHash, actualHash, StringComparison.Ordinal))
         {
+            File.Delete(verifyFilePath);
             throw new Exception(string.Format("The hash comparison for {0} failed: expected hash '{1}', actual hash '{2}'", verifyFilePath, expectedHash, actualHash));
         }
     }

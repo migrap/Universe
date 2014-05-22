@@ -15,7 +15,7 @@ var npmZip = 'npm-${npmVer}.zip'
 var nodeDist = 'http://nodejs.org/dist/'
 var nodeUrl = '${nodeDist}v${nodeVer}/${nodeExe}'
 var npmUrl = '${nodeDist}npm/${npmZip}'
-var doInstall = '${!Directory.Exists(nodeInstallDir)}'
+var doInstall = '${!File.Exists(nodeInstallDir)}'
 var nodeInstallExePath = '${Path.Combine(nodeInstallDir, nodeExe)}'
 var npmInstallZipPath = '${Path.Combine(nodeInstallDir, npmZip)}'
 
@@ -23,6 +23,10 @@ var npmInstallZipPath = '${Path.Combine(nodeInstallDir, npmZip)}'
   if (doInstall) {
     Log.Info("Installing nodejs locally");
 
+    if (Directory.Exists(nodeInstallDir))
+    {
+        Directory.Delete(nodeInstallDir, recursive: true);
+    }
     Directory.CreateDirectory(nodeInstallDir);
 
     // Download node
