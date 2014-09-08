@@ -12,6 +12,8 @@ default TEST_DIR='${Path.Combine(TARGET_DIR, "test")}'
 default Configuration='${E("Configuration")}'
     
 @{
+  var IS_CI_BUILD= !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("TEAMCITY_VERSION"));
+
   if (string.IsNullOrEmpty(E("K_BUILD_VERSION")))
   {
     E("K_BUILD_VERSION", BuildNumber);
@@ -108,6 +110,33 @@ default Configuration='${E("Configuration")}'
   stylecop-setup
   stylecop-run each='var projectFile in Files.Include("src/**/project.json")'
 
+#post-build-ci-operations target="verify" if="IS_CI_BUILD"
+    @{
+        var volatileFeed = E("PACKAGE_DROP_SHARE");
+        var packages = ExecWithRead(".nuget\\nuget.exe", "list -pre -source " + TARGET_DIR)
+                        .Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+        
+        File.WriteAllText("artifacts\\project.json", "{}");
+
+        foreach (var packageLine in packages)
+        {
+            var values = packageLine.Split();
+            var id = values[0];
+            var version = values[1];
+            var args = string.Format("kpm install --packages {0} --source {1} {2} {3} {4}",
+                                       volatileFeed, TARGET_DIR, id, version, "artifacts");
+
+            try
+            {
+                Exec("cmd", "/C " + args);
+            }
+            catch
+            {
+                // kpm restore will most likely fail since it won't find the full dependency tree.
+            }
+        }
+    }
+
 functions @{
     string E(string key) { return Environment.GetEnvironmentVariable(key); }
     void E(string key, string value) { Environment.SetEnvironmentVariable(key, value); }
@@ -146,6 +175,25 @@ functions @{
         Log.Warn("   command not found");
         return false;
       }
+    }
+    
+    string ExecWithRead(string program, string commandline) {
+        var processStartInfo = new ProcessStartInfo {
+            UseShellExecute = false,
+            FileName = "cmd",
+            Arguments = "/C " + program + " " + commandline,
+            RedirectStandardOutput = true
+          };
+      
+          Log.Info(string.Format("Exec {0} {1}", program, commandline));
+          var process = Process.Start(processStartInfo);
+          process.WaitForExit();
+          if (process.ExitCode != 0)
+          {
+              throw new Exception(string.Format("Exit code {0} from {1}", process.ExitCode, program));
+          }
+          
+          return process.StandardOutput.ReadToEnd();
     }
 }
 
