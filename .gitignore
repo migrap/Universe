@@ -15,3 +15,5 @@ StyleCop.Cache
 node_modules
 *.snk
 .nuget/NuGet.exe
+build/kvm.ps1
+build/kvm.sh

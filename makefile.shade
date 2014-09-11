@@ -68,6 +68,13 @@ functions
 #compile .pull
 #install .pull
 
+#copy-scripts target='pack'
+    @{
+        var client = new WebClient();
+        client.DownloadFile("https://raw.githubusercontent.com/aspnet/kvm/dev/src/kvm.ps1", Path.Combine(BASE_DIR, "build", "kvm.ps1"));
+        client.DownloadFile("https://raw.githubusercontent.com/aspnet/kvm/dev/src/kvm.sh", Path.Combine(BASE_DIR, "build", "kvm.sh"));
+    }
+
 #pack
     directory create='${TARGET_DIR}'
     nuget-pack nuspecFile='${Path.Combine(BASE_DIR, "KoreBuild.nuspec")}' packageVersion='${VERSION}' outputDir='${TARGET_DIR}'
