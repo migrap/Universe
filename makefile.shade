@@ -14,38 +14,39 @@ functions
     @{
         static string BASE_DIR = Directory.GetCurrentDirectory();
         static string TARGET_DIR = Path.Combine(BASE_DIR, "artifacts", "build");
-        string[] repos = new[] {
+        static Dictionary<string, string> sources = new Dictionary<string, string>(){
             // The repos list is topologically sorted based on build order
-            "Configuration",
-            "Caching",
-            "DataCommon",
-            "DataCommon.SQLite",
-            "DataProtection",
-            "DependencyInjection",
-            "Options",
-            "Logging",
-            "Testing",
-            "Diagnostics",
-            "EntityFramework",
-            "FileSystem",
-            "WebSocketAbstractions",
-            "HttpAbstractions",
-            "Hosting",
-            "Helios",
-            "Identity",
-            "Razor",
-            "Routing",
-            "Mvc",
-            "Scaffolding",
-            "Security",
-            "SignalR-Server",
-            "StaticFiles",
-            "WebListener",
-            "KestrelHttpServer",
-            "WebSockets",
-            "Entropy",
+            {"Configuration","1.0.0-alpha3"},
+            {"Caching","1.0.0-alpha3"},
+            {"DataCommon","1.0.0-alpha3"},
+            {"DataCommon.SQLite","1.0.0-alpha3"},
+            {"DataProtection","1.0.0-alpha3"},
+            {"DependencyInjection","1.0.0-alpha3"},
+            {"Options","1.0.0-alpha3"},
+            {"Logging","1.0.0-alpha3"},
+            {"Testing","1.0.0-alpha3"},
+            {"Diagnostics","1.0.0-alpha3"},
+            {"EntityFramework","7.0.0-alpha3"},
+            {"FileSystem","1.0.0-alpha3"},
+            {"WebSocketAbstractions","1.0.0-alpha3"},
+            {"HttpAbstractions","1.0.0-alpha3"},
+            {"Hosting","1.0.0-alpha3"},
+            /*{"Helios","1.0.0-alpha3"},*/
+            {"Identity","3.0.0-alpha3"},
+            {"Razor","4.0.0-alpha3"},
+            {"Routing","1.0.0-alpha3"},
+            {"Mvc","6.0.0-alpha3"},
+            {"Scaffolding","1.0.0-alpha3"},
+            {"Security","1.0.0-alpha3"},
+            {"SignalR-Server","3.0.0-alpha3"},
+            {"StaticFiles","1.0.0-alpha3"},
+            /*{"WebListener","1.0.0-alpha3"},*/
+            {"KestrelHttpServer","1.0.0-alpha3"},
+            {"WebSockets","1.0.0-alpha3"},
+            {"Entropy","1.0.0-alpha3"},
         };
-        
+        static string[] repos = sources.Keys.ToArray();
+        static string[] tags = sources.Values.ToArray();
         static bool useHttps = UseHttps(BASE_DIR);
         static string gitHubUriPrefix = useHttps ? "https://github.com/aspnet/" : "git@github.com:aspnet/";
     }
@@ -64,9 +65,10 @@ functions
 
 #default .compile
 
-#pull
+#pull .checkout
 #compile .pull
 #install .pull
+#checkout
 
 #pack
     directory create='${TARGET_DIR}'
@@ -74,6 +76,30 @@ functions
 
 #pack-install .pack
     nuget-local-publish sourcePackagesDir='${TARGET_DIR}' 
+
+#git-checkout target='checkout' 
+    @{
+        foreach (var source in sources)
+        {
+            var repo = source.Key;
+            var tag = source.Value;
+
+            if(false == Directory.Exists(repo))
+            {
+                continue;
+            }
+
+            try
+            {
+                GitCommand(repo, "checkout " + tag);
+            }
+            catch
+            {
+                // If the release branch does not exist, create a new branch and reset origin/dev to it.
+                GitCommand(repo, "checkout " + "master");
+            }
+        }
+    }
 
 #git-pull target='pull' 
     @{
@@ -232,6 +258,8 @@ functions
         }
     }
 
+macro name='GitCheckout' gitTag='string'
+    git-checkout
 
 macro name='GitPull' gitUri='string' gitBranch='string' gitFolder='string'
     git-pull
@@ -382,5 +410,5 @@ functions
                 GitConfig("bugtraq.url", "http://github.com/aspnet/" + repo + "/issues/%BUGID%", repo);
                 GitConfig("bugtraq.logregex", @"#(\d+)", repo);
             }
-        }
+        }        
     }
